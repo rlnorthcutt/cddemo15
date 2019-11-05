@@ -779,5 +779,5 @@ $settings['entity_update_backup'] = TRUE;
 # }
 
 if (file_exists('/var/www/site-php')) {
-  require '/var/www/site-php/cddemo4/cddemo4-settings.inc';
+  require '/var/www/site-php/cddemo15/cddemo15-settings.inc';
 }
