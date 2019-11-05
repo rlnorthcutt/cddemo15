@@ -1,0 +1,99 @@
+# This is an example Acquia Pipelines configuration file. For complete
+# documentation and other examples, see https://docs.acquia.com/acquia-cloud/develop/pipelines/yaml/
+#
+# If you'd like a project which sets up testing and Pipelines for you, consider
+# using Acquia BLT: https://github.com/acquia/bltversion: 1.2.0
+version: 1.3.0
+services:
+  - mysql
+  - php:
+      version: 7.3
+
+variables:
+# Enter your Acquia application variables here.
+  global:
+    SITENAME: $PIPELINE_CLOUD_SITE
+    # The Acquia Cloud application name (aka 'site name').
+    # By default, we let Pipelines detect and set this.
+    ENVIRONMENT:
+    # The Acquia Cloud environment
+    # This can be used for code deployment purposes
+    DATABASE: $PIPELINE_CLOUD_SITE
+    # The Acquia Cloud database name.
+    # On Acquia, the database provisioned by default
+    # has the sanme name as the application name.
+    # Only mnually created databases have unique names,
+    # see https://docs.acquia.com/acquia-cloud/manage/database/#adding-a-new-database.
+
+cde-databases:
+  - $DATABASE
+  - db2
+  # Enter additional databases, if applicable
+
+events:
+  # More on Pipelines Events: https://docs.acquia.com/acquia-cloud/develop/pipelines/yaml/#events-key
+  build:
+    steps:
+      - setup:
+          type: script
+          script:
+            - echo "Our global variables:"
+            - echo "pipelinecloudsite = $PIPELINE_CLOUD_SITE"
+            - echo "sitename = $SITENAME"
+            - echo "environment = $ENVIRONMENT"
+            #- echo "database = $DATABASE"
+    # Build a development codebase suitable for testing.
+    # Uncomment these lines if you have included testing dependencies in
+    # Composer's "require-dev" section.
+    #  - build-dev:
+    #      type: script
+    #      script:
+    #        - composer validate --no-check-all --ansi
+    #        - composer install
+    #
+    # Install application.
+    # Uncomment these lines if you have tests defined for your application.
+    # (Note that you will also need to uncomment the "build-dev" step above so
+    # that you have a codebase to work with.) This assumes you have a
+    # well-configured settings.php file committed to your repo and all testing
+    # dependencies like Behat and PHPUnit as dev
+    # dependencies.
+    #  - test:
+    #      type: script
+    #      script:
+    #        - drush site-install
+    #        - drush runserver --default-server=builtin 8080 &>/dev/null &
+    #        - behat
+    #        - phpunit
+    #
+    # Generate artifact. This is the codebase that will be available in the
+    # Acquia Cloud interface.
+      - build-artifact:
+          type: script
+          script:
+            - composer install --no-dev --optimize-autoloader
+  post-deploy:
+    steps:
+      # Deploy the build artifact to an on-demand environment,
+      # and sync the specified databases.
+      - deploy:
+          script:
+            - pipelines-deploy
+            - pipelines-sync-dbs $DATABASE
+            # See https://docs.acquia.com/acquia-cloud/develop/pipelines/databases/
+
+  # When a GitHub pull request is merged, this deletes the coresponding ODE.
+  # https://docs.acquia.com/acquia-cloud/develop/pipelines/commands/
+  pr-merged:
+      steps:
+      - deploy:
+          script:
+              - pipelines-deploy
+
+  # When a GitHub pull request is closed, this deletes the coresponding ODE.
+  # https://docs.acquia.com/acquia-cloud/develop/pipelines/commands/
+  pr-closed:
+      steps:
+      - deploy:
+          script:
+              - pipelines-deploy
