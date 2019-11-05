@@ -13,7 +13,7 @@
     },
     "config": {
         "process-timeout": 0,
-        "vendor-dir": "docroot/vendor"
+        "vendor-dir": "vendor"
     },
     "extra": {
         "composer-exit-on-patch-failure": true,
